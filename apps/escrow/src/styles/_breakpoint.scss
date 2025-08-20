@@ -1,0 +1,31 @@
+@use "sass:map";
+// Breakpoint Değerleri
+$breakpoints: (
+  "xs": 0,          // <576px
+  "xsm": 374px,      // ≥576px
+  "sm": 767px,      // ≥576px
+  "md": 768px,      // ≥768px
+  "lg": 992px,      // ≥992px
+  "xl": 1200px,     // ≥1200px
+  "xxl": 1400px     // ≥1400px
+);
+// Mixin Tanımı
+@mixin respond-to($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    @media (min-width: map.get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @error "Breakpoint '#{$breakpoint}' bulunamadı. Lütfen doğru bir değer girin!";
+  }
+}
+
+@mixin respond-to-max($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+     @media (max-width: map.get($breakpoints, $breakpoint)) {
+       @content;
+     }
+   } @else {
+     @error "Breakpoint '#{$breakpoint}' bulunamadı. Lütfen doğru bir değer girin!";
+   }
+ }

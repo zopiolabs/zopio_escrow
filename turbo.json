@@ -13,7 +13,8 @@
         ".basehub/**",
         "**/generated/**",
         "storybook-static/**",
-        ".react-email/**"
+        ".react-email/**",
+        "dist/**"
       ]
     },
     "lint": {
