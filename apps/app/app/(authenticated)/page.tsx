@@ -27,16 +27,26 @@ export const metadata: Metadata = {
 };
 
 const App = async () => {
-  const pages = await database.page.findMany();
-  const { orgId } = await auth();
+  const { userId, orgId } = await auth();
 
-  if (!orgId) {
+  if (!orgId || !userId) {
     notFound();
   }
 
+  // Get user's escrow transactions
+  const userTransactions = await database.escrowTransaction.findMany({
+    where: {
+      OR: [{ sellerId: userId }, { buyerId: userId }],
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 10, // Limit to recent 10 transactions
+  });
+
   return (
     <>
-      <Header pages={['Building Your Application']} page="Data Fetching">
+      <Header pages={['Escrow Dashboard']} page="Your Transactions">
         {env.LIVEBLOCKS_SECRET && (
           <CollaborationProvider orgId={orgId}>
             <AvatarStack />
@@ -46,11 +56,28 @@ const App = async () => {
       </Header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          {pages.map((page) => (
-            <div key={page.id} className="aspect-video rounded-xl bg-muted/50">
-              {page.name}
+          {userTransactions.length > 0 ? (
+            userTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="aspect-video rounded-xl bg-muted/50 p-4"
+              >
+                <div className="font-medium">{transaction.title}</div>
+                <div className="text-muted-foreground text-sm">
+                  Amount: ${transaction.amount.toString()}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  Status: {transaction.status}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-video items-center justify-center rounded-xl bg-muted/50 p-4">
+              <p className="text-muted-foreground">
+                No escrow transactions yet
+              </p>
             </div>
-          ))}
+          )}
         </div>
         <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
       </div>

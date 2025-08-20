@@ -5,15 +5,19 @@
 import { database } from '@repo/database';
 
 export const GET = async () => {
-  const newPage = await database.page.create({
+  const healthCheck = await database.auditLog.create({
     data: {
-      name: 'cron-temp',
+      entityType: 'SYSTEM',
+      entityId: 'keep-alive',
+      action: 'CREATE',
+      userId: 'system',
+      reason: 'Database connection health check',
     },
   });
 
-  await database.page.delete({
+  await database.auditLog.delete({
     where: {
-      id: newPage.id,
+      id: healthCheck.id,
     },
   });
 

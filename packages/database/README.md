@@ -35,8 +35,8 @@ import { database } from '@repo/database';
 
 // In your server component or API route
 export async function getData() {
-  const pages = await database.page.findMany();
-  return pages;
+  const transactions = await database.escrowTransaction.findMany();
+  return transactions;
 }
 ```
 
@@ -46,40 +46,51 @@ export async function getData() {
 import { database } from '@repo/database';
 
 // Find a single record
-const page = await database.page.findUnique({
-  where: { id: 1 },
+const transaction = await database.escrowTransaction.findUnique({
+  where: { id: 'clx1234567890' },
 });
 
 // Find multiple records with filtering
-const pages = await database.page.findMany({
+const transactions = await database.escrowTransaction.findMany({
   where: {
-    name: {
-      contains: 'Home',
+    title: {
+      contains: 'Vehicle',
     },
+    status: 'ACTIVE',
   },
   orderBy: {
-    name: 'asc',
+    createdAt: 'desc',
   },
 });
 
 // Create a new record
-const newPage = await database.page.create({
+const newTransaction = await database.escrowTransaction.create({
   data: {
-    name: 'New Page',
+    title: 'Vehicle Sale',
+    description: 'Sale of 2020 Toyota Camry',
+    amount: 15000,
+    sellerId: 'user_123',
+    buyerId: 'user_456',
+    status: 'PENDING',
   },
 });
 
 // Update a record
-const updatedPage = await database.page.update({
-  where: { id: 1 },
+const updatedTransaction = await database.escrowTransaction.update({
+  where: { id: 'clx1234567890' },
   data: {
-    name: 'Updated Page Name',
+    status: 'IN_PROGRESS',
+    updatedBy: 'user_123',
   },
 });
 
-// Delete a record
-const deletedPage = await database.page.delete({
-  where: { id: 1 },
+// Delete a record (soft delete)
+const deletedTransaction = await database.escrowTransaction.update({
+  where: { id: 'clx1234567890' },
+  data: {
+    deletedAt: new Date(),
+    deletedBy: 'user_123',
+  },
 });
 ```
 
@@ -90,22 +101,30 @@ import { database } from '@repo/database';
 
 // Perform multiple operations in a transaction
 const result = await database.$transaction(async (tx) => {
-  // Create a new page
-  const page = await tx.page.create({
+  // Create a new escrow transaction
+  const escrow = await tx.escrowTransaction.create({
     data: {
-      name: 'Transaction Page',
+      title: 'Vehicle Purchase',
+      description: 'Sale of 2020 Honda Civic',
+      amount: 18000,
+      sellerId: 'user_seller',
+      buyerId: 'user_buyer',
+      status: 'PENDING',
     },
   });
   
-  // Update another page
-  const updatedPage = await tx.page.update({
-    where: { id: 1 },
+  // Create activity log for the transaction
+  const activity = await tx.activity.create({
     data: {
-      name: 'Updated in Transaction',
+      transactionId: escrow.id,
+      type: 'TRANSACTION_CREATED',
+      description: 'Escrow transaction created',
+      performedBy: 'user_seller',
+      createdBy: 'user_seller',
     },
   });
   
-  return { page, updatedPage };
+  return { escrow, activity };
 });
 ```
 
@@ -116,7 +135,7 @@ import { database, Prisma } from '@repo/database';
 
 // Execute a raw SQL query
 const result = await database.$queryRaw`
-  SELECT * FROM "Page" WHERE "name" LIKE ${`%${searchTerm}%`}
+  SELECT * FROM "EscrowTransaction" WHERE "title" LIKE ${`%${searchTerm}%`}
 `;
 ```
 
@@ -230,18 +249,18 @@ This package is configured to work with Neon's serverless PostgreSQL. Some best 
 ### With Next.js App Router
 
 ```tsx
-// app/pages/route.ts
+// app/transactions/route.ts
 import { database } from '@repo/database';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const pages = await database.page.findMany();
-    return NextResponse.json({ pages });
+    const transactions = await database.escrowTransaction.findMany();
+    return NextResponse.json({ transactions });
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch pages' },
+      { error: 'Failed to fetch transactions' },
       { status: 500 }
     );
   }
@@ -255,12 +274,12 @@ export async function GET() {
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-// Fetch pages
-function usePages() {
+// Fetch transactions
+function useTransactions() {
   return useQuery({
-    queryKey: ['pages'],
+    queryKey: ['transactions'],
     queryFn: async () => {
-      const response = await fetch('/api/pages');
+      const response = await fetch('/api/transactions');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -269,28 +288,33 @@ function usePages() {
   });
 }
 
-// Create a new page
-function useCreatePage() {
+// Create a new transaction
+function useCreateTransaction() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (name: string) => {
-      const response = await fetch('/api/pages', {
+    mutationFn: async (transactionData: {
+      title: string;
+      description: string;
+      amount: number;
+      buyerId: string;
+    }) => {
+      const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(transactionData),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to create page');
+        throw new Error('Failed to create transaction');
       }
       
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 }
@@ -303,24 +327,39 @@ function useCreatePage() {
 
 import { database } from '@repo/database';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@repo/auth/server';
 
-export async function createPage(formData: FormData) {
-  const name = formData.get('name') as string;
+export async function createTransaction(formData: FormData) {
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const amount = Number(formData.get('amount'));
+  const buyerId = formData.get('buyerId') as string;
   
-  if (!name) {
-    return { error: 'Name is required' };
+  const { userId } = await auth();
+  
+  if (!title || !amount || !buyerId || !userId) {
+    return { error: 'All fields are required' };
   }
   
   try {
-    await database.page.create({
-      data: { name },
+    await database.escrowTransaction.create({
+      data: { 
+        title,
+        description,
+        amount,
+        buyerId,
+        sellerId: userId,
+        status: 'PENDING',
+        createdBy: userId,
+        updatedBy: userId,
+      },
     });
     
-    revalidatePath('/pages');
+    revalidatePath('/transactions');
     return { success: true };
   } catch (error) {
-    console.error('Failed to create page:', error);
-    return { error: 'Failed to create page' };
+    console.error('Failed to create transaction:', error);
+    return { error: 'Failed to create transaction' };
   }
 }
 ```

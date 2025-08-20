@@ -26,16 +26,9 @@ export const generateMetadata = async ({
 
 const SearchPage = async ({ searchParams }: SearchPageProperties) => {
   const { q } = await searchParams;
-  const pages = await database.page.findMany({
-    where: {
-      name: {
-        contains: q,
-      },
-    },
-  });
-  const { orgId } = await auth();
+  const { userId, orgId } = await auth();
 
-  if (!orgId) {
+  if (!orgId || !userId) {
     notFound();
   }
 
@@ -43,16 +36,57 @@ const SearchPage = async ({ searchParams }: SearchPageProperties) => {
     redirect('/');
   }
 
+  // Search escrow transactions by title, description, or transaction ID
+  const transactions = await database.escrowTransaction.findMany({
+    where: {
+      AND: [
+        {
+          OR: [{ sellerId: userId }, { buyerId: userId }],
+        },
+        {
+          OR: [
+            { title: { contains: q, mode: 'insensitive' } },
+            { description: { contains: q, mode: 'insensitive' } },
+            { id: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+      ],
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
   return (
     <>
-      <Header pages={['Building Your Application']} page="Search" />
+      <Header pages={['Escrow Dashboard']} page={`Search: "${q}"`} />
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          {pages.map((page) => (
-            <div key={page.id} className="aspect-video rounded-xl bg-muted/50">
-              {page.name}
+          {transactions.length > 0 ? (
+            transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="aspect-video rounded-xl bg-muted/50 p-4"
+              >
+                <div className="font-medium">{transaction.title}</div>
+                <div className="text-muted-foreground text-sm">
+                  Amount: ${transaction.amount.toString()}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  Status: {transaction.status}
+                </div>
+                <div className="mt-2 text-muted-foreground text-xs">
+                  ID: {transaction.id.slice(0, 8)}...
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-video items-center justify-center rounded-xl bg-muted/50 p-4">
+              <p className="text-muted-foreground">
+                No transactions found for "{q}"
+              </p>
             </div>
-          ))}
+          )}
         </div>
         <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
       </div>
