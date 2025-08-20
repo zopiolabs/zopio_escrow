@@ -8,7 +8,11 @@
     "analyze": "prisma generate --no-hints --schema=./prisma/schema.prisma",
     "build": "prisma generate --no-hints --schema=./prisma/schema.prisma",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "seed": "npx tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
@@ -26,6 +30,7 @@
     "@types/ws": "^8.18.1",
     "bufferutil": "^4.0.9",
     "prisma": "6.4.1",
+    "tsx": "^4.20.4",
     "typescript": "^5.8.3"
   }
 }

@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// Paylox Escrow System Database Schema
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -13,9 +13,380 @@ datasource db {
   relationMode = "prisma"
 }
 
-// This is a stub model.
-// Delete it and add your own Prisma models.
-model Page {
-  id   Int    @id @default(autoincrement())
-  name String
+// User extension for escrow-specific data
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique // Clerk user ID
+  
+  // Individual Info
+  fullName        String?
+  identityNumber  String?  // Turkish ID
+  birthDate       DateTime?
+  phone           String?
+  phoneVerified   Boolean  @default(false)
+  
+  // Corporate Info
+  companyTitle    String?
+  taxNumber       String?
+  taxOffice       String?
+  
+  // Financial Info
+  iban            String?
+  accountHolder   String?
+  
+  // Address
+  address         String?
+  
+  // Verification
+  kycStatus       KYCStatus @default(PENDING)
+  kycDocuments    String[] // URLs to verification documents
+  
+  // Relationships
+  sellerTransactions  EscrowTransaction[] @relation("SellerTransactions")
+  buyerTransactions   EscrowTransaction[] @relation("BuyerTransactions")
+  
+  // Audit Trail Fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String   // User ID who created this profile
+  updatedBy       String   // User ID who last updated this profile
+  version         Int      @default(1) // Optimistic locking
+  
+  // Soft Delete
+  deletedAt       DateTime?
+  deletedBy       String?  // User ID who deleted this profile
+  
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([deletedAt])
+}
+
+model EscrowTransaction {
+  id                String   @id @default(cuid())
+  orderId           String   @unique
+  
+  // Parties
+  sellerId          String
+  seller            UserProfile @relation("SellerTransactions", fields: [sellerId], references: [userId])
+  buyerId           String?
+  buyer             UserProfile? @relation("BuyerTransactions", fields: [buyerId], references: [userId])
+  
+  // Financial Details
+  amount            Decimal  @db.Decimal(12, 2)
+  currency          String   @default("TRY")
+  platformFee       Decimal  @db.Decimal(10, 2)
+  sellerReceives    Decimal  @db.Decimal(12, 2)
+  
+  // Status Management
+  status            EscrowStatus
+  paymentStatus     PaymentStatus
+  paymentReference  String?  // Jetcheckout payment ID
+  
+  // Product/Service Information
+  category          String
+  title             String
+  description       String?
+  productInfo       Json     // Flexible product data
+  
+  // Vehicle-specific (when applicable)
+  vehicleInfo       VehicleInfo?
+  
+  // Documents
+  documents         Document[]
+  
+  // Verification & Approval
+  otpVerified       Boolean  @default(false)
+  otpCode           String?
+  otpExpiresAt      DateTime?
+  sellerApproved    Boolean  @default(false)
+  buyerApproved     Boolean  @default(false)
+  sellerApprovedAt  DateTime?
+  buyerApprovedAt   DateTime?
+  
+  // Delivery Information
+  deliveryMethod    String?
+  trackingNumber    String?
+  deliveryAddress   String?
+  deliveryProof     String?  // Document URL
+  
+  // Dispute Management
+  disputed          Boolean  @default(false)
+  disputeReason     String?
+  disputeRaisedBy   String?
+  disputeRaisedAt   DateTime?
+  disputeResolvedAt DateTime?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  paidAt            DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  releasedAt        DateTime?
+  completedAt       DateTime?
+  
+  // Enhanced Audit Trail
+  statusHistory     StatusHistory[]
+  activities        Activity[]
+  auditLogs         AuditLog[]
+  
+  // Audit Trail Fields
+  createdBy         String   // User ID who created this transaction
+  updatedBy         String   // User ID who last updated this transaction
+  version           Int      @default(1) // Optimistic locking
+  
+  // Soft Delete
+  deletedAt         DateTime?
+  deletedBy         String?  // User ID who deleted this transaction
+  
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([deletedAt])
+}
+
+model VehicleInfo {
+  id              String   @id @default(cuid())
+  transactionId   String   @unique
+  transaction     EscrowTransaction @relation(fields: [transactionId], references: [id])
+  
+  vin             String   // 17-character VIN
+  licensePlate    String
+  brand           String
+  model           String
+  year            Int
+  color           String?
+  mileage         Int?
+  
+  // Registration Documents
+  registrationDoc String?  // URL to document
+  
+  // Audit Trail Fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String   // User ID who created this vehicle info
+  updatedBy       String   // User ID who last updated this vehicle info
+  version         Int      @default(1) // Optimistic locking
+  
+  // Soft Delete
+  deletedAt       DateTime?
+  deletedBy       String?  // User ID who deleted this vehicle info
+  
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([deletedAt])
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  transactionId   String
+  transaction     EscrowTransaction @relation(fields: [transactionId], references: [id])
+  
+  type            DocumentType
+  url             String   // Vercel Blob URL
+  fileName        String
+  fileSize        Int
+  mimeType        String
+  
+  uploadedBy      String   // User ID
+  uploadedAt      DateTime @default(now())
+  
+  // Verification
+  verified        Boolean  @default(false)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  verificationNotes String?
+  
+  // Audit Trail Fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String   // User ID who created this document record
+  updatedBy       String   // User ID who last updated this document
+  version         Int      @default(1) // Optimistic locking
+  
+  // Soft Delete
+  deletedAt       DateTime?
+  deletedBy       String?  // User ID who deleted this document
+  
+  @@index([transactionId])
+  @@index([uploadedBy])
+  @@index([verifiedBy])
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([deletedAt])
+}
+
+model StatusHistory {
+  id              String   @id @default(cuid())
+  transactionId   String
+  transaction     EscrowTransaction @relation(fields: [transactionId], references: [id])
+  
+  fromStatus      EscrowStatus?
+  toStatus        EscrowStatus
+  changedBy       String   // User ID or system
+  reason          String?
+  metadata        Json?
+  
+  // Audit Trail Fields
+  createdAt       DateTime @default(now())
+  createdBy       String   // User ID who created this status change record
+  
+  // Immutable record - no updatedAt/updatedBy needed
+  // StatusHistory entries should never be modified after creation
+  
+  @@index([transactionId])
+  @@index([changedBy])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model Activity {
+  id              String   @id @default(cuid())
+  transactionId   String
+  transaction     EscrowTransaction @relation(fields: [transactionId], references: [id])
+  
+  type            ActivityType
+  description     String
+  performedBy     String   // User ID or system
+  metadata        Json?
+  
+  // Audit Trail Fields
+  createdAt       DateTime @default(now())
+  createdBy       String   // User ID who created this activity record
+  
+  // Immutable record - no updatedAt/updatedBy needed
+  // Activity entries should never be modified after creation
+  
+  @@index([transactionId])
+  @@index([performedBy])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  
+  // What was changed
+  entityType      String   // Model name (e.g., "UserProfile", "EscrowTransaction")
+  entityId        String   // ID of the entity that was changed
+  transactionId   String?  // Optional: Link to transaction if applicable
+  transaction     EscrowTransaction? @relation(fields: [transactionId], references: [id])
+  
+  // Change Details
+  action          AuditAction // CREATE, UPDATE, DELETE, STATUS_CHANGE
+  fieldName       String?  // Specific field that was changed (null for full record operations)
+  oldValue        Json?    // Previous value (null for CREATE)
+  newValue        Json?    // New value (null for DELETE)
+  
+  // Context
+  userId          String   // User who performed the action
+  userRole        String?  // User's role at time of action
+  ipAddress       String?  // IP address of the user
+  userAgent       String?  // Browser/app information
+  sessionId       String?  // Session identifier
+  
+  // Business Context
+  reason          String?  // Optional reason for the change
+  metadata        Json?    // Additional context data
+  
+  // Security & Integrity
+  checksum        String?  // Hash for integrity verification
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  
+  // Immutable - audit logs should never be modified
+  // No updatedAt, updatedBy, deletedAt fields
+  
+  @@index([entityType, entityId])
+  @@index([transactionId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([checksum])
+}
+
+// Enums
+enum KYCStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum EscrowStatus {
+  DRAFT           // Initial creation
+  PENDING_BUYER   // Waiting for buyer information
+  PENDING_PAYMENT // Ready for payment
+  PAYMENT_PROCESSING // Payment in progress
+  FUNDS_HELD      // Payment successful, funds held
+  PENDING_DELIVERY // Awaiting shipment/delivery
+  DELIVERED       // Item delivered, awaiting confirmation
+  PENDING_RELEASE // Buyer confirmed, awaiting final release
+  COMPLETED       // Funds released, transaction complete
+  DISPUTED        // Dispute raised
+  CANCELLED       // Transaction cancelled
+  REFUNDED        // Refund processed
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIAL_REFUND
+}
+
+enum DocumentType {
+  VEHICLE_REGISTRATION
+  ASSIGNMENT_FORM
+  DELIVERY_PROOF
+  ID_VERIFICATION
+  PRODUCT_IMAGE
+  OTHER
+}
+
+enum ActivityType {
+  CREATED
+  UPDATED
+  PAYMENT_INITIATED
+  PAYMENT_COMPLETED
+  PAYMENT_FAILED
+  DELIVERED
+  APPROVED
+  DISPUTED
+  RESOLVED
+  CANCELLED
+  REFUNDED
+  DOCUMENT_UPLOADED
+  DOCUMENT_VERIFIED
+  PROFILE_UPDATED
+  VEHICLE_INFO_UPDATED
+  AUDIT_LOG_CREATED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SOFT_DELETE
+  RESTORE
+  STATUS_CHANGE
+  APPROVAL_GRANTED
+  APPROVAL_REVOKED
+  PAYMENT_PROCESSED
+  DOCUMENT_UPLOADED
+  DOCUMENT_VERIFIED
+  DOCUMENT_DELETED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
+  FUNDS_RELEASED
+  TRANSACTION_CANCELLED
 }

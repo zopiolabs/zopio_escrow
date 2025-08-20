@@ -20,6 +20,7 @@
       "node_modules/**",
       "packages/collaboration/config.ts",
       "packages/database/generated/**",
+      "packages/database/prisma/seed.ts",
       "packages/design-system/blocks/**",
       "packages/design-system/hooks/**",
       "packages/design-system/lib/**",
