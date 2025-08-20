@@ -71,7 +71,7 @@ The Paylox Escrow System will be built using the Zopio Framework as the foundati
 **Required Features Identified:**
 
 1. **Multi-step Forms**: seller-info.html, recipient-info.html, product-info.html, payment.html
-2. **OTP Verification**: otp.html with 6-digit input and countdown timer
+2. **OTP Verification**: Email-based OTP via Clerk authentication system
 3. **Dashboard**: index.html with listing management and settings
 4. **Payment Processing**: Credit card, saved cards, partial payments
 5. **Document Management**: Vehicle registration, assignment forms
@@ -131,7 +131,7 @@ The Paylox Escrow System will be built using the Zopio Framework as the foundati
 ├─────────────────────────────────────────┤
 │  External Service Integration           │
 │  - Jetcheckout (Payment Processing)     │
-│  - SMS Gateway (OTP)                    │
+│  - Email OTP (via Clerk)               │
 │  - Document Verification                │
 └─────────────────────────────────────────┘
 ```
@@ -564,7 +564,7 @@ apps/api/src/app/api/
 │       └── route.ts              - GET: User's saved cards
 ├── otp/
 │   ├── send/
-│   │   └── route.ts              - POST: Send OTP via SMS
+│   │   └── route.ts              - POST: Send OTP via Clerk email
 │   ├── verify/
 │   │   └── route.ts              - POST: Verify OTP code
 │   └── resend/
@@ -582,7 +582,7 @@ apps/api/src/app/api/
 │   ├── clerk/
 │   │   └── route.ts              - POST: User lifecycle webhooks
 │   └── sms/
-│       └── route.ts              - POST: SMS delivery webhooks
+│       └── route.ts              - POST: Email delivery webhooks
 ├── admin/
 │   ├── transactions/
 │   │   ├── route.ts              - GET: All transactions (paginated)
@@ -2365,7 +2365,7 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
 **Umut (uozopio) - Advanced Backend (4h):**
 
 - Implement OTP service
-  - SMS integration via Twilio/similar
+  - Email OTP integration via Clerk authentication
   - Code generation and validation
   - Expiry handling
 - Document upload service
@@ -2480,7 +2480,7 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
 **Day 2 Advanced Tasks (8 hours):**
 
 1. **OTP Service Implementation (2h)**
-   - SMS integration setup
+   - Email OTP integration via Clerk
    - Code generation and validation
    - Expiry handling and cleanup
 
@@ -2630,10 +2630,10 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
 
 ### Medium Priority Risks
 
-1. **SMS/OTP Service Integration**
-   - **Risk**: SMS service setup delays, rate limiting
-   - **Mitigation**: Use established service (Twilio), implement rate limiting
-   - **Fallback**: Email OTP instead of SMS for MVP
+1. **Email OTP Service Integration**
+   - **Risk**: Clerk email delivery limits, rate limiting
+   - **Mitigation**: Use Clerk's built-in rate limiting, implement proper error handling
+   - **Fallback**: Basic Clerk authentication without OTP for MVP
    - **Owner**: Umut
    - **Timeline**: Day 2 morning
 
@@ -2675,7 +2675,7 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
 - ✅ Complete seller registration with Turkish ID/corporate info validation
 - ✅ Buyer information collection with address handling
 - ✅ Product information with vehicle-specific fields
-- ✅ OTP verification with SMS integration working
+- ✅ OTP verification with Clerk email integration working
 - ✅ Payment processing via Jetcheckout with 3D Secure
 - ✅ Document upload for vehicle registration and assignment forms
 - ✅ Basic escrow state management (create → pay → hold → release)
@@ -2768,7 +2768,7 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
    - Data migration and rollback
 
 3. **External Services:**
-   - SMS delivery for OTP
+   - Email delivery for OTP via Clerk
    - Email notifications
    - File storage operations
    - Authentication flows
@@ -2785,7 +2785,7 @@ export function SellerInfoForm({ transactionId, initialData, onSubmit, isLoading
 
 - **Enhanced Notifications:**
   - Email templates for all transaction stages
-  - SMS notifications for critical events
+  - Email notifications for critical events via Resend
   - In-app notification system
   - Push notifications for mobile
 

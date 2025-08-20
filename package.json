@@ -16,9 +16,9 @@
   "files": ["dist/index.js"],
   "scripts": {
     "// Development": "",
-    "dev": "turbo dev --filter='!storybook'",
+    "dev": "turbo dev --filter=!storybook",
     "dev:all": "turbo dev",
-    "build": "turbo build --filter='!storybook'",
+    "build": "turbo build --filter=!storybook",
     "build:all": "turbo build",
     "// Code Quality": "",
     "format": "ultracite format",
