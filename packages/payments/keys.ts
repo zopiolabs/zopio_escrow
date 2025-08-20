@@ -8,7 +8,7 @@ import { z } from 'zod';
 export const keys = () =>
   createEnv({
     server: {
-      STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
+      STRIPE_SECRET_KEY: z.string().optional(),
       STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
     },
     runtimeEnv: {

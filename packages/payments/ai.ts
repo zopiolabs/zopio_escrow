@@ -5,19 +5,22 @@
 import { StripeAgentToolkit } from '@stripe/agent-toolkit/ai-sdk';
 import { keys } from './keys';
 
-export const paymentsAgentToolkit = new StripeAgentToolkit({
-  secretKey: keys().STRIPE_SECRET_KEY,
-  configuration: {
-    actions: {
-      paymentLinks: {
-        create: true,
+const secretKey = keys().STRIPE_SECRET_KEY;
+export const paymentsAgentToolkit = secretKey
+  ? new StripeAgentToolkit({
+      secretKey,
+      configuration: {
+        actions: {
+          paymentLinks: {
+            create: true,
+          },
+          products: {
+            create: true,
+          },
+          prices: {
+            create: true,
+          },
+        },
       },
-      products: {
-        create: true,
-      },
-      prices: {
-        create: true,
-      },
-    },
-  },
-});
+    })
+  : null;
