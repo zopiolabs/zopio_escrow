@@ -28,6 +28,14 @@ export default defineConfig({
     minify: false,
     sourcemap: true,
     rollupOptions: {
+      input: {
+        main: './index.html',
+        otp: './otp.html',
+        payment: './payment.html',
+        'product-info': './product-info.html',
+        'recipient-info': './recipient-info.html',
+        'seller-info': './seller-info.html',
+      },
       output: {
         assetFileNames: 'assets/[name][extname]',
         chunkFileNames: 'assets/[name].js',

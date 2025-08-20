@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { setupFileUpload } from './fileUpload.js';
-import { setupPartialPriceValidation } from './setupPartialPriceValidation.js';
+import { setupFileUpload } from './file-upload.js';
+import { setupPartialPriceValidation } from './setup-partial-price-validation.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   setupPartialPriceValidation();
