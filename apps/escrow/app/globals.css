@@ -1,0 +1,28 @@
+@import "@repo/design-system/globals.css";
+
+@layer base {
+  :root {
+    /* Escrow App Custom Variables */
+    --escrow-primary: 220 100% 50%;
+    --escrow-secondary: 210 40% 98%;
+  }
+
+  .dark {
+    /* Dark theme overrides if needed */
+  }
+}
+
+@layer components {
+  /* Custom component styles specific to escrow app */
+  .escrow-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  .escrow-form-section {
+    @apply space-y-6 p-6 border rounded-lg;
+  }
+
+  .escrow-status-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
