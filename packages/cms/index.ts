@@ -138,7 +138,9 @@ export const blog = {
   }),
 
   getPosts: async (): Promise<PostMeta[]> => {
-    if (!basehub) return [];
+    if (!basehub) {
+      return [];
+    }
 
     try {
       const data = await basehub.query(blog.postsQuery);
@@ -155,7 +157,9 @@ export const blog = {
   },
 
   getLatestPost: async () => {
-    if (!basehub) return null;
+    if (!basehub) {
+      return null;
+    }
 
     try {
       const data = await basehub.query(blog.latestPostQuery);
@@ -171,7 +175,9 @@ export const blog = {
   },
 
   getPost: async (slug: string) => {
-    if (!basehub) return null;
+    if (!basehub) {
+      return null;
+    }
 
     try {
       const query = blog.postQuery(slug);
@@ -242,7 +248,9 @@ export const legal = {
     }),
 
   getPosts: async (): Promise<LegalPost[]> => {
-    if (!basehub) return [];
+    if (!basehub) {
+      return [];
+    }
 
     try {
       const data = await basehub.query(legal.postsQuery);
@@ -259,7 +267,9 @@ export const legal = {
   },
 
   getLatestPost: async () => {
-    if (!basehub) return null;
+    if (!basehub) {
+      return null;
+    }
 
     try {
       const data = await basehub.query(legal.latestPostQuery);
@@ -275,7 +285,9 @@ export const legal = {
   },
 
   getPost: async (slug: string) => {
-    if (!basehub) return null;
+    if (!basehub) {
+      return null;
+    }
 
     try {
       const query = legal.postQuery(slug);

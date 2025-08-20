@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { setupToggle } from './toggle.js';
 import { setupTogglePanel } from './toggle-panel.js';
 import { setupToggleSummaryPanel } from './toggle-summary-panel.js';
+import { setupToggle } from './toggle.js';
 import { setupTooltips } from './tooltip.js';
 
 document.addEventListener('DOMContentLoaded', () => {
