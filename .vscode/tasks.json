@@ -185,6 +185,58 @@
         "clear": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Build All",
+      "type": "shell",
+      "command": "pnpm build:all",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "Build All",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev All",
+      "type": "shell",
+      "command": "pnpm dev:all",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "Dev All",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Storybook Build",
+      "type": "shell",
+      "command": "pnpm storybook:build",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "Storybook Build",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Storybook Dev",
+      "type": "shell",
+      "command": "pnpm storybook:dev",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "Storybook Dev",
+        "clear": true
+      },
+      "problemMatcher": []
     }
   ]
 }

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "basehub dev",
+    "dev": "if [ -n \"$BASEHUB_TOKEN\" ]; then basehub dev; else echo 'BASEHUB_TOKEN not set, skipping basehub dev'; fi",
     "build": "if [ -n \"$BASEHUB_TOKEN\" ]; then basehub build; else echo 'BASEHUB_TOKEN not set, skipping basehub build'; fi",
     "analyze": "basehub",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
