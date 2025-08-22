@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { Sidebar } from '@/components/sidebar';
+import { Sidebar } from '@/app/[locale]/components/sidebar';
 import { ArrowLeftIcon } from '@radix-ui/react-icons';
 import { legal } from '@repo/cms';
 import type { LegalPost } from '@repo/cms';
