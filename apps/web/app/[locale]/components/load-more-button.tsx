@@ -36,16 +36,14 @@ export function LoadMoreButton({
         disabled={isLoading || !hasMore || disabled}
         {...props}
       >
-        {isLoading ? (
+        {isLoading && (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading...
           </>
-        ) : hasMore ? (
-          loadMoreText
-        ) : (
-          noMoreText
         )}
+        {!isLoading && hasMore && loadMoreText}
+        {!isLoading && !hasMore && noMoreText}
       </Button>
     </div>
   );
